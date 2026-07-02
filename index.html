@@ -2,13 +2,16 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>TEKKEN FIGHTER</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
@@ -51,284 +54,199 @@
             display: none;
         }
 
+        #fullscreenBtn {
+            margin-top: 16px;
+            padding: 10px 18px;
+            font-size: 14px;
+            background: #00ff00;
+            color: #000;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* Rotate-device overlay: reliable fallback since orientation.lock()
+           is not supported on iOS Safari and requires fullscreen on Android */
+        #rotateOverlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: #000;
+            color: #00ff00;
+            z-index: 500;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 30px;
+        }
+
+        #rotateOverlay .icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+            animation: rotateHint 1.6s ease-in-out infinite;
+        }
+
+        @keyframes rotateHint {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(90deg); }
+        }
+
+        @media (orientation: portrait) {
+            #rotateOverlay { display: flex; }
+        }
+
         /* Controls Info */
         .controls-info {
             position: absolute;
-            top: 20px;
-            left: 20px;
+            top: 10px;
+            left: 10px;
             background-color: rgba(0, 0, 0, 0.85);
             color: #00ff00;
-            padding: 20px;
+            padding: 12px 16px;
             border-radius: 8px;
-            font-size: 14px;
+            font-size: 12px;
             z-index: 50;
             border: 2px solid #00ff00;
             box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+            max-width: 46%;
         }
 
         .controls-info h2 {
-            margin-bottom: 12px;
-            font-size: 18px;
+            margin-bottom: 8px;
+            font-size: 14px;
             text-shadow: 0 0 5px #00ff00;
         }
 
         .controls-info div {
-            margin-bottom: 8px;
-            line-height: 1.4;
+            margin-bottom: 4px;
+            line-height: 1.3;
         }
 
-        /* PS Controller Container */
-        .controller-container {
-            position: absolute;
-            bottom: 30px;
-            right: 30px;
-            z-index: 50;
-            display: flex;
-            gap: 40px;
-        }
-
-        /* Joystick Section */
-        .joystick-section {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .joystick-label {
-            color: #fff;
-            font-size: 12px;
-            font-weight: bold;
-            text-align: center;
-            margin-top: 10px;
-        }
-
-        /* D-Pad */
-        .dpad {
-            width: 120px;
-            height: 120px;
-            position: relative;
-            background: #1a1a1a;
-            border-radius: 10px;
-            border: 2px solid #444;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .dpad-buttons {
-            display: grid;
-            grid-template-columns: repeat(3, 30px);
-            grid-template-rows: repeat(3, 30px);
-            gap: 8px;
-        }
-
-        .dpad-btn {
-            width: 30px;
-            height: 30px;
-            border: none;
-            background: #333;
-            color: #888;
-            cursor: pointer;
-            border-radius: 3px;
-            font-size: 18px;
-            font-weight: bold;
-            transition: all 0.1s;
-            border: 2px solid #555;
-        }
-
-        .dpad-btn:hover {
-            background: #444;
-            color: #aaa;
-        }
-
-        .dpad-btn:active {
-            background: #555;
-            color: #fff;
-            transform: scale(0.95);
-        }
-
-        /* PS Buttons Section */
-        .buttons-section {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .buttons-label {
-            color: #fff;
-            font-size: 12px;
-            font-weight: bold;
-        }
-
-        .ps-buttons {
-            display: grid;
-            grid-template-columns: repeat(2, 70px);
-            grid-template-rows: repeat(2, 70px);
-            gap: 20px;
-            align-items: center;
-            justify-items: center;
-        }
-
-        .ps-btn {
-            width: 70px;
-            height: 70px;
-            border: none;
-            border-radius: 50%;
-            font-size: 32px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.1s;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3), inset 0 2px 4px rgba(255, 255, 255, 0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .ps-btn:active {
-            transform: scale(0.9);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), inset 0 1px 2px rgba(0, 0, 0, 0.3);
-        }
-
-        /* Triangle Button (Green) */
-        .triangle-btn {
-            background: linear-gradient(135deg, #00ff00, #00cc00);
-            border: 3px solid #00aa00;
-            grid-column: 2;
-            grid-row: 1;
-            color: #000;
-        }
-
-        .triangle-btn:hover {
-            background: linear-gradient(135deg, #33ff33, #00ff00);
-            box-shadow: 0 0 15px rgba(0, 255, 0, 0.6), inset 0 2px 4px rgba(255, 255, 255, 0.3);
-        }
-
-        /* Square Button (Magenta) */
-        .square-btn {
-            background: linear-gradient(135deg, #ff00ff, #cc00cc);
-            border: 3px solid #aa00aa;
-            grid-column: 1;
-            grid-row: 2;
-            border-radius: 8px;
-            font-size: 28px;
-        }
-
-        .square-btn:hover {
-            background: linear-gradient(135deg, #ff33ff, #ff00ff);
-            box-shadow: 0 0 15px rgba(255, 0, 255, 0.6), inset 0 2px 4px rgba(255, 255, 255, 0.3);
-        }
-
-        /* Circle Button (Yellow) */
-        .circle-btn {
-            background: linear-gradient(135deg, #ffff00, #cccc00);
-            border: 3px solid #aaaa00;
-            grid-column: 2;
-            grid-row: 2;
-            color: #000;
-        }
-
-        .circle-btn:hover {
-            background: linear-gradient(135deg, #ffff33, #ffff00);
-            box-shadow: 0 0 15px rgba(255, 255, 0, 0.6), inset 0 2px 4px rgba(255, 255, 255, 0.3);
-        }
-
-        /* X Button (Blue) */
-        .x-btn {
-            background: linear-gradient(135deg, #0066ff, #0044cc);
-            border: 3px solid #0033aa;
-            grid-column: 1;
-            grid-row: 1;
-        }
-
-        .x-btn:hover {
-            background: linear-gradient(135deg, #3388ff, #0066ff);
-            box-shadow: 0 0 15px rgba(0, 102, 255, 0.6), inset 0 2px 4px rgba(255, 255, 255, 0.3);
-        }
-
-        /* Button Labels */
-        .button-label {
-            position: absolute;
-            font-size: 10px;
-            color: #888;
-            font-weight: bold;
-        }
-
-        .triangle-label {
-            bottom: -20px;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-
-        .square-label {
-            bottom: -20px;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-
-        .circle-label {
-            bottom: -20px;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-
-        .x-label {
-            bottom: -20px;
-            left: 50%;
-            transform: translateX(-50%);
-        }
+        .p1-color { color: #00aaff; font-weight: bold; }
+        .p2-color { color: #ff6600; font-weight: bold; }
 
         /* Stats Display */
         .stats {
             position: absolute;
-            top: 20px;
-            right: 20px;
+            top: 10px;
+            right: 10px;
             background-color: rgba(0, 0, 0, 0.85);
             color: #00ff00;
-            padding: 20px;
+            padding: 12px 16px;
             border-radius: 8px;
-            font-size: 14px;
+            font-size: 12px;
             z-index: 50;
             border: 2px solid #00ff00;
             box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
             font-family: 'Courier New', monospace;
+            display: flex;
+            gap: 16px;
         }
 
         .stats h3 {
-            margin-bottom: 10px;
-            font-size: 16px;
+            margin-bottom: 6px;
+            font-size: 13px;
         }
 
         .stat-line {
-            margin: 5px 0;
+            margin: 3px 0;
         }
 
-        @media (max-width: 768px) {
-            .controller-container {
-                bottom: 15px;
-                right: 15px;
-                gap: 20px;
-            }
+        /* PUBG-style control clusters: P1 bottom-left, P2 bottom-right */
+        .controls-side {
+            position: absolute;
+            bottom: 14px;
+            z-index: 50;
+            display: flex;
+            align-items: flex-end;
+            gap: 14px;
+        }
 
-            .ps-buttons {
-                grid-template-columns: repeat(2, 50px);
-                grid-template-rows: repeat(2, 50px);
-                gap: 15px;
-            }
+        .controls-side.left {
+            left: 14px;
+        }
 
-            .ps-btn {
-                width: 50px;
-                height: 50px;
-                font-size: 24px;
-            }
+        .controls-side.right {
+            right: 14px;
+            flex-direction: row-reverse;
+        }
 
-            .controls-info {
-                top: 10px;
-                left: 10px;
-                padding: 15px;
-                font-size: 12px;
-            }
+        .side-label {
+            position: absolute;
+            top: -22px;
+            font-size: 11px;
+            font-weight: bold;
+            width: 100%;
+            text-align: center;
+        }
+
+        .p1-label { color: #00aaff; }
+        .p2-label { color: #ff6600; }
+
+        .move-pad {
+            position: relative;
+            display: flex;
+            gap: 8px;
+        }
+
+        .move-btn {
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            border: 2px solid #555;
+            background: rgba(30, 30, 30, 0.85);
+            color: #fff;
+            font-size: 20px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .move-btn:active {
+            transform: scale(0.9);
+            background: rgba(60, 60, 60, 0.9);
+        }
+
+        .jump-btn {
+            width: 54px;
+            height: 54px;
+        }
+
+        .attack-btn {
+            width: 70px;
+            height: 70px;
+            font-size: 15px;
+            border-width: 3px;
+        }
+
+        .p1 .attack-btn {
+            background: linear-gradient(135deg, #00aaff, #0066cc);
+            border-color: #0088ff;
+        }
+
+        .p2 .attack-btn {
+            background: linear-gradient(135deg, #ff6600, #cc4400);
+            border-color: #ff8800;
+        }
+
+        .move-name-tag {
+            position: absolute;
+            bottom: -18px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 9px;
+            color: #ccc;
+            white-space: nowrap;
+        }
+
+        @media (max-width: 900px) {
+            .move-btn, .jump-btn { width: 44px; height: 44px; font-size: 16px; }
+            .attack-btn { width: 58px; height: 58px; font-size: 12px; }
+            .controls-info { font-size: 10px; padding: 8px 10px; }
+            .stats { font-size: 10px; padding: 8px 10px; }
         }
     </style>
 </head>
@@ -337,60 +255,59 @@
         <div class="loading" id="loadingScreen">
             <div style="color: #00ff00; text-shadow: 0 0 10px #00ff00;">⚔️</div>
             <div>Loading TEKKEN FIGHTER...</div>
-            <div style="font-size: 14px; margin-top: 10px; color: #888;">Loading 3D Character Model</div>
+            <div style="font-size: 14px; margin-top: 10px; color: #888;">Loading Fighters</div>
+            <button id="fullscreenBtn">Enter Fullscreen / Landscape</button>
+        </div>
+
+        <div id="rotateOverlay">
+            <div class="icon">📱</div>
+            <div style="font-size: 18px; font-weight: bold;">Rotate your device</div>
+            <div style="font-size: 13px; color: #888; margin-top: 8px;">This fight is best played in landscape mode</div>
         </div>
 
         <!-- Controls Info -->
         <div class="controls-info">
-            <h2>⚔️ TEKKEN FIGHTER</h2>
-            <div><strong>← →</strong> or <strong>A/D</strong>: Move</div>
-            <div><strong>W / Space</strong>: Jump (△)</div>
-            <div><strong>E</strong>: Combo Attack (□)</div>
-            <div><strong>X</strong>: Special Action</div>
+            <h2>⚔️ TEKKEN FIGHTER — 2P</h2>
+            <div><span class="p1-color">P1 Heihachi:</span> A/D move · W jump · E attack (cycles moves)</div>
+            <div><span class="p2-color">P2 Jin:</span> ←/→ move · ↑ jump · / attack (cycles moves)</div>
         </div>
 
         <!-- Stats Display -->
         <div class="stats">
-            <h3>CHARACTER STATS</h3>
-            <div class="stat-line">Position X: <span id="posX">0.00</span></div>
-            <div class="stat-line">Position Y: <span id="posY">0.00</span></div>
-            <div class="stat-line">State: <span id="state">READY</span></div>
-            <div class="stat-line">Attack CD: <span id="attackCD">0</span></div>
+            <div>
+                <h3 class="p1-color">P1 HEIHACHI</h3>
+                <div class="stat-line">X: <span id="p1PosX">0.00</span></div>
+                <div class="stat-line">State: <span id="p1State">READY</span></div>
+                <div class="stat-line">Move: <span id="p1Move">Punch</span></div>
+            </div>
+            <div>
+                <h3 class="p2-color">P2 JIN</h3>
+                <div class="stat-line">X: <span id="p2PosX">0.00</span></div>
+                <div class="stat-line">State: <span id="p2State">READY</span></div>
+                <div class="stat-line">Move: <span id="p2Move">Punch</span></div>
+            </div>
         </div>
 
-        <!-- PS Controller UI -->
-        <div class="controller-container">
-            <!-- Joystick/D-Pad Section -->
-            <div class="joystick-section">
-                <div class="dpad">
-                    <div class="dpad-buttons">
-                        <div style="grid-column: 1/4; grid-row: 1; display: flex; justify-content: center;">
-                            <button class="dpad-btn" id="upBtn" style="grid-column: 2;">↑</button>
-                        </div>
-                        <div style="grid-column: 1; grid-row: 2;">
-                            <button class="dpad-btn" id="leftBtn">◀</button>
-                        </div>
-                        <div style="grid-column: 3; grid-row: 2;">
-                            <button class="dpad-btn" id="rightBtn">▶</button>
-                        </div>
-                        <div style="grid-column: 1/4; grid-row: 3; display: flex; justify-content: center;">
-                            <button class="dpad-btn" id="downBtn">↓</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="joystick-label">D-PAD / JOYSTICK</div>
+        <!-- Player 1 controls: bottom-left -->
+        <div class="controls-side left p1">
+            <div class="side-label p1-label" style="position: static; margin-right: 6px;">P1</div>
+            <div class="move-pad">
+                <button class="move-btn" id="p1LeftBtn">◀</button>
+                <button class="move-btn jump-btn" id="p1JumpBtn">▲</button>
+                <button class="move-btn" id="p1RightBtn">▶</button>
             </div>
+            <button class="move-btn attack-btn" id="p1AttackBtn">FIGHT<span class="move-name-tag" id="p1MoveTag">Punch</span></button>
+        </div>
 
-            <!-- PS Buttons Section -->
-            <div class="buttons-section">
-                <div class="buttons-label">PS BUTTONS</div>
-                <div class="ps-buttons">
-                    <button class="ps-btn triangle-btn" id="triangleBtn">△</button>
-                    <button class="ps-btn square-btn" id="squareBtn">◻</button>
-                    <button class="ps-btn circle-btn" id="circleBtn">◯</button>
-                    <button class="ps-btn x-btn" id="xBtn">✕</button>
-                </div>
+        <!-- Player 2 controls: bottom-right -->
+        <div class="controls-side right p2">
+            <div class="side-label p2-label" style="position: static; margin-left: 6px;">P2</div>
+            <div class="move-pad">
+                <button class="move-btn" id="p2LeftBtn">◀</button>
+                <button class="move-btn jump-btn" id="p2JumpBtn">▲</button>
+                <button class="move-btn" id="p2RightBtn">▶</button>
             </div>
+            <button class="move-btn attack-btn" id="p2AttackBtn">FIGHT<span class="move-name-tag" id="p2MoveTag">Punch</span></button>
         </div>
     </div>
 
@@ -400,58 +317,68 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 
     <script>
-        // Game State
+        // Different attack moves the FIGHT button cycles through on each tap.
+        // rotationAmplitude/lunge are best-effort visual differentiators; I have not
+        // rendered these against the actual models, so amounts may need tuning once you see it live.
+        const MOVES = [
+            { name: 'Punch',  cooldown: 25, animFrames: 12, rotationAmplitude: 0.25, lunge: 0.25 },
+            { name: 'Kick',   cooldown: 35, animFrames: 16, rotationAmplitude: 0.45, lunge: 0.15 },
+            { name: 'Combo',  cooldown: 55, animFrames: 26, rotationAmplitude: 0.6,  lunge: 0.5 }
+        ];
+
+        function createFighter(startX, baseFacingRight) {
+            return {
+                model: null,
+                position: { x: startX, y: 0, z: 0 },
+                direction: baseFacingRight ? 1 : -1,
+                baseFacingRight: baseFacingRight,
+                isJumping: false,
+                velocityY: 0,
+                isAttacking: false,
+                attackAnimTimer: 0,
+                attackCooldown: 0,
+                moveIndex: 0,
+                activeMove: MOVES[0],
+                keys: {}
+            };
+        }
+
         const gameState = {
             scene: null,
             camera: null,
             renderer: null,
-            character: null,
-            character2: null,
             controls: null,
-            position: { x: 0, y: 0, z: 0 },
-            isJumping: false,
-            velocityY: 0,
-            isAttacking: false,
-            attackCooldown: 0,
-            direction: 1,
-            keys: {}
+            player1: createFighter(-2.5, true),   // Heihachi, faces right by default
+            player2: createFighter(2.5, false)     // Jin, faces left by default
         };
 
-        // Initialize Game
+        // ---- Init ----
         function initGame() {
-            // Scene Setup
             gameState.scene = new THREE.Scene();
             gameState.scene.background = new THREE.Color(0x1a1a2e);
             gameState.scene.fog = new THREE.Fog(0x1a1a2e, 10, 50);
 
-            // Camera Setup
             gameState.camera = new THREE.PerspectiveCamera(
-                75,
-                window.innerWidth / window.innerHeight,
-                0.1,
-                1000
+                70, window.innerWidth / window.innerHeight, 0.1, 1000
             );
-            gameState.camera.position.set(0, 3, 8);
+            gameState.camera.position.set(0, 3, 9);
             gameState.camera.lookAt(0, 2, 0);
 
-            // Renderer Setup
             gameState.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             gameState.renderer.setSize(window.innerWidth, window.innerHeight);
             gameState.renderer.shadowMap.enabled = true;
             gameState.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
             document.getElementById('gameContainer').appendChild(gameState.renderer.domElement);
 
-            // Orbit Controls (360-degree camera around the stage)
             gameState.controls = new THREE.OrbitControls(gameState.camera, gameState.renderer.domElement);
             gameState.controls.target.set(0, 2, 0);
             gameState.controls.enableDamping = true;
             gameState.controls.dampingFactor = 0.08;
             gameState.controls.minDistance = 3;
             gameState.controls.maxDistance = 25;
-            gameState.controls.maxPolarAngle = Math.PI / 2 - 0.05; // don't let camera go below ground
+            gameState.controls.maxPolarAngle = Math.PI / 2 - 0.05;
             gameState.controls.update();
 
-            // Lighting
             const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
             gameState.scene.add(ambientLight);
 
@@ -466,47 +393,76 @@
             directionalLight.shadow.camera.bottom = -5;
             gameState.scene.add(directionalLight);
 
-            // Ground
             const groundGeometry = new THREE.PlaneGeometry(30, 30);
             const groundMaterial = new THREE.MeshLambertMaterial({ color: 0x8b7355 });
             const ground = new THREE.Mesh(groundGeometry, groundMaterial);
             ground.rotation.x = -Math.PI / 2;
             ground.receiveShadow = true;
-            ground.position.y = 0;
             gameState.scene.add(ground);
 
-            // Create Temple Background
             createTemple();
+            loadFighters();
 
-            // Load Character
-            loadCharacter();
-
-            // Event Listeners
             window.addEventListener('keydown', handleKeyDown);
             window.addEventListener('keyup', handleKeyUp);
             window.addEventListener('resize', handleResize);
 
-            // Button Event Listeners
-            document.getElementById('leftBtn').addEventListener('mousedown', () => moveCharacter('left'));
-            document.getElementById('rightBtn').addEventListener('mousedown', () => moveCharacter('right'));
-            document.getElementById('triangleBtn').addEventListener('mousedown', jumpCharacter);
-            document.getElementById('squareBtn').addEventListener('mousedown', attackCharacter);
-            document.getElementById('xBtn').addEventListener('mousedown', specialAction);
+            bindHoldButton('p1LeftBtn', () => { gameState.player1.keys['left'] = true; }, () => { gameState.player1.keys['left'] = false; });
+            bindHoldButton('p1RightBtn', () => { gameState.player1.keys['right'] = true; }, () => { gameState.player1.keys['right'] = false; });
+            bindTapButton('p1JumpBtn', () => jumpFighter(gameState.player1));
+            bindTapButton('p1AttackBtn', () => attackFighter(gameState.player1, 'p1'));
 
-            // Touch support
-            document.getElementById('leftBtn').addEventListener('touchstart', () => moveCharacter('left'));
-            document.getElementById('rightBtn').addEventListener('touchstart', () => moveCharacter('right'));
-            document.getElementById('triangleBtn').addEventListener('touchstart', jumpCharacter);
-            document.getElementById('squareBtn').addEventListener('touchstart', attackCharacter);
-            document.getElementById('xBtn').addEventListener('touchstart', specialAction);
+            bindHoldButton('p2LeftBtn', () => { gameState.player2.keys['left'] = true; }, () => { gameState.player2.keys['left'] = false; });
+            bindHoldButton('p2RightBtn', () => { gameState.player2.keys['right'] = true; }, () => { gameState.player2.keys['right'] = false; });
+            bindTapButton('p2JumpBtn', () => jumpFighter(gameState.player2));
+            bindTapButton('p2AttackBtn', () => attackFighter(gameState.player2, 'p2'));
 
-            // Start Animation Loop
+            document.getElementById('fullscreenBtn').addEventListener('click', enterFullscreenLandscape);
+
             animate();
         }
 
-        // Create Temple Background
+        // Buttons that act while held down (movement)
+        function bindHoldButton(id, onDown, onUp) {
+            const el = document.getElementById(id);
+            el.addEventListener('mousedown', onDown);
+            el.addEventListener('mouseup', onUp);
+            el.addEventListener('mouseleave', onUp);
+            el.addEventListener('touchstart', (e) => { e.preventDefault(); onDown(); }, { passive: false });
+            el.addEventListener('touchend', (e) => { e.preventDefault(); onUp(); }, { passive: false });
+        }
+
+        // Buttons that fire once per press (jump, attack)
+        function bindTapButton(id, onTap) {
+            const el = document.getElementById(id);
+            el.addEventListener('mousedown', onTap);
+            el.addEventListener('touchstart', (e) => { e.preventDefault(); onTap(); }, { passive: false });
+        }
+
+        // Best-effort fullscreen + landscape lock.
+        // Works on Android Chrome. Does NOT work on iOS Safari (no orientation.lock support at all) —
+        // the CSS rotateOverlay is the reliable cross-browser fallback, this is a bonus for browsers that support it.
+        function enterFullscreenLandscape() {
+            const el = document.documentElement;
+            const request = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen;
+            const doLock = () => {
+                if (screen.orientation && screen.orientation.lock) {
+                    screen.orientation.lock('landscape').catch((err) => {
+                        console.warn('Orientation lock not supported on this browser:', err);
+                    });
+                }
+            };
+            if (request) {
+                request.call(el).then(doLock).catch((err) => {
+                    console.warn('Fullscreen request failed:', err);
+                    doLock();
+                });
+            } else {
+                doLock();
+            }
+        }
+
         function createTemple() {
-            // Temple base/platform
             const baseGeometry = new THREE.BoxGeometry(12, 2, 1.5);
             const baseMaterial = new THREE.MeshLambertMaterial({ color: 0xcd7f32 });
             const base = new THREE.Mesh(baseGeometry, baseMaterial);
@@ -515,7 +471,6 @@
             base.receiveShadow = true;
             gameState.scene.add(base);
 
-            // Temple pillars
             const pillarPositions = [-4, -2, 0, 2, 4];
             pillarPositions.forEach(x => {
                 const pillarGeometry = new THREE.CylinderGeometry(0.5, 0.5, 6, 32);
@@ -526,7 +481,6 @@
                 pillar.receiveShadow = true;
                 gameState.scene.add(pillar);
 
-                // Capital on pillar
                 const capitalGeometry = new THREE.BoxGeometry(1.2, 0.4, 1.2);
                 const capitalMaterial = new THREE.MeshLambertMaterial({ color: 0xffd700 });
                 const capital = new THREE.Mesh(capitalGeometry, capitalMaterial);
@@ -535,7 +489,6 @@
                 gameState.scene.add(capital);
             });
 
-            // Temple roof
             const roofGeometry = new THREE.ConeGeometry(6, 2.5, 4);
             const roofMaterial = new THREE.MeshLambertMaterial({ color: 0x8b0000 });
             const roof = new THREE.Mesh(roofGeometry, roofMaterial);
@@ -543,7 +496,6 @@
             roof.castShadow = true;
             gameState.scene.add(roof);
 
-            // Decorative hanging elements
             for (let i = 0; i < 6; i++) {
                 const decorGeometry = new THREE.BoxGeometry(0.3, 0.3, 0.3);
                 const decorMaterial = new THREE.MeshLambertMaterial({ color: 0xffd700 });
@@ -554,203 +506,185 @@
             }
         }
 
-        // Load Character Model(s)
-        function loadCharacter() {
+        // ---- Load both fighters ----
+        function loadFighters() {
             const loader = new THREE.GLTFLoader();
-            let heihachiLoaded = false;
-            let jinLoaded = false;
-
-            const checkAllLoaded = () => {
-                if (heihachiLoaded && jinLoaded) {
+            let loadedCount = 0;
+            const total = 2;
+            const onOneDone = () => {
+                loadedCount++;
+                if (loadedCount >= total) {
                     document.getElementById('loadingScreen').classList.add('hidden');
                 }
             };
 
-            // Heihachi - controllable character
             loader.load('./tekken_heihachi_mishima_muscular_hakama_battle.glb', (gltf) => {
-                gameState.character = gltf.scene;
-                gameState.character.scale.set(1, 1, 1);
-                gameState.character.position.copy(gameState.position);
-
-                gameState.character.traverse((child) => {
-                    if (child.isMesh) {
-                        child.castShadow = true;
-                        child.receiveShadow = true;
-                    }
+                const model = gltf.scene;
+                model.traverse((child) => {
+                    if (child.isMesh) { child.castShadow = true; child.receiveShadow = true; }
                 });
-
-                gameState.scene.add(gameState.character);
-                heihachiLoaded = true;
-                checkAllLoaded();
+                model.position.set(gameState.player1.position.x, 0, 0);
+                gameState.scene.add(model);
+                gameState.player1.model = model;
+                onOneDone();
             }, undefined, (error) => {
                 console.error('Error loading Heihachi model:', error);
-                document.getElementById('loadingScreen').innerHTML = 'Error loading Heihachi model';
+                onOneDone();
             });
 
-            // Jin Kazama - static display character, positioned facing Heihachi
             loader.load('./jin_kazama_a_character_from_tekken.glb', (gltf) => {
-                gameState.character2 = gltf.scene;
-                gameState.character2.scale.set(1, 1, 1);
-                gameState.character2.position.set(3, 0, 0);
-                gameState.character2.rotation.y = -Math.PI / 2;
-
-                gameState.character2.traverse((child) => {
-                    if (child.isMesh) {
-                        child.castShadow = true;
-                        child.receiveShadow = true;
-                    }
+                const model = gltf.scene;
+                model.traverse((child) => {
+                    if (child.isMesh) { child.castShadow = true; child.receiveShadow = true; }
                 });
-
-                gameState.scene.add(gameState.character2);
-                jinLoaded = true;
-                checkAllLoaded();
+                model.position.set(gameState.player2.position.x, 0, 0);
+                gameState.scene.add(model);
+                gameState.player2.model = model;
+                onOneDone();
             }, undefined, (error) => {
                 console.error('Error loading Jin model:', error);
-                // Don't block the whole game if only Jin fails
-                jinLoaded = true;
-                checkAllLoaded();
+                onOneDone();
             });
         }
 
-        // Character Movement
-        function moveCharacter(direction) {
-            if (direction === 'left') {
-                gameState.position.x -= 0.2;
-                gameState.direction = -1;
-            } else if (direction === 'right') {
-                gameState.position.x += 0.2;
-                gameState.direction = 1;
+        // ---- Fighter actions (shared logic for both players) ----
+        function moveFighter(fighter, dir) {
+            if (dir === 'left') {
+                fighter.position.x -= 0.1;
+                fighter.direction = -1;
+            } else {
+                fighter.position.x += 0.1;
+                fighter.direction = 1;
+            }
+            fighter.position.x = Math.max(-10, Math.min(10, fighter.position.x));
+        }
+
+        function jumpFighter(fighter) {
+            if (!fighter.isJumping) {
+                fighter.isJumping = true;
+                fighter.velocityY = 0.35;
             }
         }
 
-        // Jump
-        function jumpCharacter() {
-            if (!gameState.isJumping) {
-                gameState.isJumping = true;
-                gameState.velocityY = 0.35;
+        // Attack button: cycles to a different move each tap (Punch -> Kick -> Combo -> Punch ...)
+        function attackFighter(fighter, statPrefix) {
+            if (fighter.attackCooldown > 0) return;
+            const move = MOVES[fighter.moveIndex];
+            fighter.activeMove = move;
+            fighter.isAttacking = true;
+            fighter.attackAnimTimer = move.animFrames;
+            fighter.attackCooldown = move.cooldown;
+
+            document.getElementById(statPrefix + 'Move').textContent = move.name;
+            document.getElementById(statPrefix + 'MoveTag').textContent = move.name;
+
+            // advance to the next move for the following tap
+            fighter.moveIndex = (fighter.moveIndex + 1) % MOVES.length;
+            const nextMoveName = MOVES[fighter.moveIndex].name;
+            document.getElementById(statPrefix + 'AttackBtn').querySelector('.move-name-tag').textContent = 'Next: ' + nextMoveName;
+        }
+
+        function updateFighterPhysics(fighter) {
+            if (fighter.keys['left']) moveFighter(fighter, 'left');
+            if (fighter.keys['right']) moveFighter(fighter, 'right');
+
+            if (fighter.isJumping) {
+                fighter.velocityY -= 0.012;
+                fighter.position.y += fighter.velocityY;
+                if (fighter.position.y <= 0) {
+                    fighter.position.y = 0;
+                    fighter.isJumping = false;
+                    fighter.velocityY = 0;
+                }
+            }
+
+            if (fighter.attackCooldown > 0) fighter.attackCooldown--;
+            if (fighter.attackAnimTimer > 0) {
+                fighter.attackAnimTimer--;
+            } else {
+                fighter.isAttacking = false;
             }
         }
 
-        // Attack
-        function attackCharacter() {
-            if (gameState.attackCooldown <= 0) {
-                gameState.isAttacking = true;
-                gameState.attackCooldown = 40;
+        function updateFighterModel(fighter) {
+            if (!fighter.model) return;
+            const move = fighter.activeMove;
+            const lungeOffset = fighter.isAttacking ? fighter.direction * move.lunge : 0;
+
+            fighter.model.position.x = fighter.position.x + lungeOffset;
+            fighter.model.position.y = fighter.position.y;
+            fighter.model.position.z = fighter.position.z;
+
+            // Turn to face movement direction using rotation (not scale-flip, which mirrors
+            // 3D mesh geometry incorrectly). Default facing assumption may need adjusting
+            // once you see the actual models rendered — I could not verify their export
+            // orientation without rendering them myself.
+            const facingRight = fighter.direction === 1;
+            fighter.model.rotation.y = (facingRight === fighter.baseFacingRight) ? 0 : Math.PI;
+
+            if (fighter.isAttacking) {
+                fighter.model.rotation.z = Math.sin(Date.now() * 0.02) * move.rotationAmplitude;
+            } else {
+                fighter.model.rotation.z = 0;
             }
         }
 
-        // Special Action (X Button)
-        function specialAction() {
-            gameState.position.y = Math.max(0, gameState.position.y - 0.15);
-        }
-
-        // Key Down Handler
         function handleKeyDown(e) {
-            gameState.keys[e.key.toLowerCase()] = true;
+            const key = e.key.toLowerCase();
+            if (key === 'a') gameState.player1.keys['left'] = true;
+            if (key === 'd') gameState.player1.keys['right'] = true;
+            if (key === 'w' || (e.key === ' ')) { jumpFighter(gameState.player1); e.preventDefault(); }
+            if (key === 'e') attackFighter(gameState.player1, 'p1');
 
-            if (e.key.toLowerCase() === 'arrowleft' || e.key.toLowerCase() === 'a') {
-                moveCharacter('left');
-            } else if (e.key.toLowerCase() === 'arrowright' || e.key.toLowerCase() === 'd') {
-                moveCharacter('right');
-            } else if (e.key.toLowerCase() === 'w' || e.key === ' ') {
-                jumpCharacter();
-                e.preventDefault();
-            } else if (e.key.toLowerCase() === 'e') {
-                attackCharacter();
-            } else if (e.key.toLowerCase() === 'x') {
-                specialAction();
-            }
+            if (key === 'arrowleft') gameState.player2.keys['left'] = true;
+            if (key === 'arrowright') gameState.player2.keys['right'] = true;
+            if (key === 'arrowup') { jumpFighter(gameState.player2); e.preventDefault(); }
+            if (e.key === '/') { attackFighter(gameState.player2, 'p2'); e.preventDefault(); }
         }
 
-        // Key Up Handler
         function handleKeyUp(e) {
-            gameState.keys[e.key.toLowerCase()] = false;
+            const key = e.key.toLowerCase();
+            if (key === 'a') gameState.player1.keys['left'] = false;
+            if (key === 'd') gameState.player1.keys['right'] = false;
+            if (key === 'arrowleft') gameState.player2.keys['left'] = false;
+            if (key === 'arrowright') gameState.player2.keys['right'] = false;
         }
 
-        // Resize Handler
         function handleResize() {
             gameState.camera.aspect = window.innerWidth / window.innerHeight;
             gameState.camera.updateProjectionMatrix();
             gameState.renderer.setSize(window.innerWidth, window.innerHeight);
         }
 
-        // Animation Loop
         function animate() {
             requestAnimationFrame(animate);
 
-            // Continuous movement while keys are held
-            if (gameState.keys['arrowleft'] || gameState.keys['a']) {
-                gameState.position.x -= 0.1;
-                gameState.direction = -1;
-            }
-            if (gameState.keys['arrowright'] || gameState.keys['d']) {
-                gameState.position.x += 0.1;
-                gameState.direction = 1;
-            }
+            updateFighterPhysics(gameState.player1);
+            updateFighterPhysics(gameState.player2);
+            updateFighterModel(gameState.player1);
+            updateFighterModel(gameState.player2);
 
-            // Physics - Gravity
-            if (gameState.isJumping) {
-                gameState.velocityY -= 0.012;
-                gameState.position.y += gameState.velocityY;
-
-                if (gameState.position.y <= 0) {
-                    gameState.position.y = 0;
-                    gameState.isJumping = false;
-                    gameState.velocityY = 0;
-                }
-            }
-
-            // Limit horizontal bounds
-            gameState.position.x = Math.max(-12, Math.min(12, gameState.position.x));
-
-            // Attack cooldown
-            if (gameState.attackCooldown > 0) {
-                gameState.attackCooldown--;
-            }
-
-            // Update character
-            if (gameState.character) {
-                gameState.character.position.x = gameState.position.x;
-                gameState.character.position.y = gameState.position.y;
-                gameState.character.position.z = gameState.position.z;
-                gameState.character.scale.x = gameState.direction;
-
-                // Attack animation
-                if (gameState.isAttacking) {
-                    gameState.character.rotation.z = Math.sin(Date.now() * 0.02) * 0.4;
-                    if (gameState.attackCooldown < 10) {
-                        gameState.isAttacking = false;
-                    }
-                } else {
-                    gameState.character.rotation.z = 0;
-                }
-            }
-
-            // Update Stats Display
             updateStats();
 
-            // Update Orbit Controls (needed every frame when damping is enabled)
-            if (gameState.controls) {
-                gameState.controls.update();
-            }
-
-            // Render
+            if (gameState.controls) gameState.controls.update();
             gameState.renderer.render(gameState.scene, gameState.camera);
         }
 
-        // Update Stats Display
         function updateStats() {
-            document.getElementById('posX').textContent = gameState.position.x.toFixed(2);
-            document.getElementById('posY').textContent = gameState.position.y.toFixed(2);
-            
-            let state = 'READY';
-            if (gameState.isJumping) state = 'JUMPING';
-            if (gameState.isAttacking) state = 'ATTACKING';
-            document.getElementById('state').textContent = state;
-            document.getElementById('attackCD').textContent = gameState.attackCooldown;
+            document.getElementById('p1PosX').textContent = gameState.player1.position.x.toFixed(2);
+            document.getElementById('p2PosX').textContent = gameState.player2.position.x.toFixed(2);
+
+            let s1 = 'READY';
+            if (gameState.player1.isJumping) s1 = 'JUMPING';
+            if (gameState.player1.isAttacking) s1 = 'ATTACKING';
+            document.getElementById('p1State').textContent = s1;
+
+            let s2 = 'READY';
+            if (gameState.player2.isJumping) s2 = 'JUMPING';
+            if (gameState.player2.isAttacking) s2 = 'ATTACKING';
+            document.getElementById('p2State').textContent = s2;
         }
 
-        // Start Game
         initGame();
     </script>
 </body>
