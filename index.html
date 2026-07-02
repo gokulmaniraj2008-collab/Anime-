@@ -395,8 +395,8 @@
     </div>
 
     <!-- Three.js Library -->
-    <script src="https://cdn.jsdelivr.net/npm/three@r128/build/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@r128/examples/jsm/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 
     <script>
         // Game State
@@ -419,7 +419,7 @@
             // Scene Setup
             gameState.scene = new THREE.Scene();
             gameState.scene.background = new THREE.Color(0x1a1a2e);
-            gameState.scene.fog = new THREE.Fog(0x1a1a2e, 100, 50);
+            gameState.scene.fog = new THREE.Fog(0x1a1a2e, 10, 50);
 
             // Camera Setup
             gameState.camera = new THREE.PerspectiveCamera(
@@ -435,7 +435,7 @@
             gameState.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             gameState.renderer.setSize(window.innerWidth, window.innerHeight);
             gameState.renderer.shadowMap.enabled = true;
-            gameState.renderer.shadowMap.type = THREE.PCFShadowShadowMap;
+            gameState.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
             document.getElementById('gameContainer').appendChild(gameState.renderer.domElement);
 
             // Lighting
@@ -544,7 +544,7 @@
         // Load Character Model
         function loadCharacter() {
             const loader = new THREE.GLTFLoader();
-            loader.load('/mnt/user-data/uploads/tekken_heihachi_mishima_muscular_hakama_battle.glb', (gltf) => {
+            loader.load('./tekken_heihachi_mishima_muscular_hakama_battle.glb', (gltf) => {
                 gameState.character = gltf.scene;
                 gameState.character.scale.set(1, 1, 1);
                 gameState.character.position.copy(gameState.position);
