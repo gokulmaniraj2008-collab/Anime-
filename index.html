@@ -397,6 +397,7 @@
     <!-- Three.js Library -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 
     <script>
         // Game State
@@ -405,6 +406,8 @@
             camera: null,
             renderer: null,
             character: null,
+            character2: null,
+            controls: null,
             position: { x: 0, y: 0, z: 0 },
             isJumping: false,
             velocityY: 0,
@@ -437,6 +440,16 @@
             gameState.renderer.shadowMap.enabled = true;
             gameState.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
             document.getElementById('gameContainer').appendChild(gameState.renderer.domElement);
+
+            // Orbit Controls (360-degree camera around the stage)
+            gameState.controls = new THREE.OrbitControls(gameState.camera, gameState.renderer.domElement);
+            gameState.controls.target.set(0, 2, 0);
+            gameState.controls.enableDamping = true;
+            gameState.controls.dampingFactor = 0.08;
+            gameState.controls.minDistance = 3;
+            gameState.controls.maxDistance = 25;
+            gameState.controls.maxPolarAngle = Math.PI / 2 - 0.05; // don't let camera go below ground
+            gameState.controls.update();
 
             // Lighting
             const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
@@ -541,26 +554,61 @@
             }
         }
 
-        // Load Character Model
+        // Load Character Model(s)
         function loadCharacter() {
             const loader = new THREE.GLTFLoader();
+            let heihachiLoaded = false;
+            let jinLoaded = false;
+
+            const checkAllLoaded = () => {
+                if (heihachiLoaded && jinLoaded) {
+                    document.getElementById('loadingScreen').classList.add('hidden');
+                }
+            };
+
+            // Heihachi - controllable character
             loader.load('./tekken_heihachi_mishima_muscular_hakama_battle.glb', (gltf) => {
                 gameState.character = gltf.scene;
                 gameState.character.scale.set(1, 1, 1);
                 gameState.character.position.copy(gameState.position);
-                
+
                 gameState.character.traverse((child) => {
                     if (child.isMesh) {
                         child.castShadow = true;
                         child.receiveShadow = true;
                     }
                 });
-                
+
                 gameState.scene.add(gameState.character);
-                document.getElementById('loadingScreen').classList.add('hidden');
+                heihachiLoaded = true;
+                checkAllLoaded();
             }, undefined, (error) => {
-                console.error('Error loading model:', error);
-                document.getElementById('loadingScreen').innerHTML = 'Error loading character model';
+                console.error('Error loading Heihachi model:', error);
+                document.getElementById('loadingScreen').innerHTML = 'Error loading Heihachi model';
+            });
+
+            // Jin Kazama - static display character, positioned facing Heihachi
+            loader.load('./jin_kazama_a_character_from_tekken.glb', (gltf) => {
+                gameState.character2 = gltf.scene;
+                gameState.character2.scale.set(1, 1, 1);
+                gameState.character2.position.set(3, 0, 0);
+                gameState.character2.rotation.y = -Math.PI / 2;
+
+                gameState.character2.traverse((child) => {
+                    if (child.isMesh) {
+                        child.castShadow = true;
+                        child.receiveShadow = true;
+                    }
+                });
+
+                gameState.scene.add(gameState.character2);
+                jinLoaded = true;
+                checkAllLoaded();
+            }, undefined, (error) => {
+                console.error('Error loading Jin model:', error);
+                // Don't block the whole game if only Jin fails
+                jinLoaded = true;
+                checkAllLoaded();
             });
         }
 
@@ -680,6 +728,11 @@
 
             // Update Stats Display
             updateStats();
+
+            // Update Orbit Controls (needed every frame when damping is enabled)
+            if (gameState.controls) {
+                gameState.controls.update();
+            }
 
             // Render
             gameState.renderer.render(gameState.scene, gameState.camera);
