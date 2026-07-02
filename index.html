@@ -100,8 +100,8 @@
         /* Controls Info */
         .controls-info {
             position: absolute;
-            top: 10px;
-            left: 10px;
+            top: calc(10px + env(safe-area-inset-top, 0px));
+            left: calc(10px + env(safe-area-inset-left, 0px));
             background-color: rgba(0, 0, 0, 0.85);
             color: #00ff00;
             padding: 12px 16px;
@@ -130,8 +130,8 @@
         /* Stats Display */
         .stats {
             position: absolute;
-            top: 10px;
-            right: 10px;
+            top: calc(10px + env(safe-area-inset-top, 0px));
+            right: calc(10px + env(safe-area-inset-right, 0px));
             background-color: rgba(0, 0, 0, 0.85);
             color: #00ff00;
             padding: 12px 16px;
@@ -157,7 +157,7 @@
         /* PUBG-style control clusters: P1 bottom-left, P2 bottom-right */
         .controls-side {
             position: absolute;
-            bottom: 14px;
+            bottom: calc(14px + env(safe-area-inset-bottom, 0px));
             z-index: 50;
             display: flex;
             align-items: flex-end;
@@ -165,11 +165,11 @@
         }
 
         .controls-side.left {
-            left: 14px;
+            left: calc(14px + env(safe-area-inset-left, 0px));
         }
 
         .controls-side.right {
-            right: 14px;
+            right: calc(14px + env(safe-area-inset-right, 0px));
             flex-direction: row-reverse;
         }
 
